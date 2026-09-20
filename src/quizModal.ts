@@ -12,6 +12,8 @@ const DEFAULT_PROMPT =
 export class QuizModal extends Modal {
 	private closed = false;
 	private requestId = 0;
+	private ratingReady = false;
+	private keyHandler: (e: KeyboardEvent) => void;
 
 	constructor(
 		app: App,
@@ -21,10 +23,34 @@ export class QuizModal extends Modal {
 		private requestToken = "",
 	) {
 		super(app);
+
+		this.keyHandler = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+			if (
+				target.tagName === "INPUT" ||
+				target.tagName === "TEXTAREA" ||
+				target.isContentEditable
+			)
+				return;
+			if (e.ctrlKey || e.metaKey || e.altKey) return;
+			if (!this.ratingReady || !this.onRate) return;
+			if (!["1", "2", "3", "4"].includes(e.key)) return;
+
+			const qualities = [0, 3, 4, 5];
+			const q = qualities[parseInt(e.key) - 1];
+			if (q !== undefined) {
+				e.preventDefault();
+				e.stopPropagation();
+				this.close();
+				this.onRate(q, this.file.path);
+			}
+		};
 	}
 
 	async onOpen(): Promise<void> {
 		this.closed = false;
+		this.ratingReady = false;
+		document.addEventListener("keydown", this.keyHandler, true);
 		const requestId = ++this.requestId;
 		const { contentEl } = this;
 		contentEl.empty();
@@ -55,6 +81,7 @@ export class QuizModal extends Modal {
 			this.renderQuizText(resultEl, markdown);
 
 			if (this.onRate) {
+				this.ratingReady = true;
 				const ratingSection = contentEl.createDiv({
 					cls: "sr-quiz-rating",
 				});
@@ -65,8 +92,11 @@ export class QuizModal extends Modal {
 				const btnRow = ratingSection.createDiv({
 					cls: "sr-quiz-rating-buttons",
 				});
-				RATING_BUTTONS.forEach(([label, quality, cls]) => {
-					const btn = btnRow.createEl("button", { cls, text: label });
+				RATING_BUTTONS.forEach(([label, quality, cls], idx) => {
+					const btn = btnRow.createEl("button", {
+						cls,
+						text: `${label} [${idx + 1}]`,
+					});
 					btn.addEventListener("click", () => {
 						this.close();
 						this.onRate!(quality, this.file.path);
@@ -82,7 +112,9 @@ export class QuizModal extends Modal {
 
 	onClose(): void {
 		this.closed = true;
+		this.ratingReady = false;
 		this.requestId++;
+		document.removeEventListener("keydown", this.keyHandler, true);
 		this.contentEl.empty();
 	}
 

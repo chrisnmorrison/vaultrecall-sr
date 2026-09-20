@@ -28,6 +28,10 @@ export class SRScheduler {
 			interval = 1;
 		} else if (prevInterval === 0) {
 			interval = 1;
+		} else if (quality === 3) {
+			// Hard: grow slowly with a fixed 1.2x multiplier (Anki-style),
+			// rather than compounding the full ease factor.
+			interval = Math.max(1, Math.round(prevInterval * 1.2));
 		} else {
 			interval = Math.max(1, Math.round(prevInterval * ease));
 		}

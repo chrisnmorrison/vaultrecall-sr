@@ -4,6 +4,7 @@ import { localDateString } from "../src/date";
 import { sanitizeQuizMarkdown, validateQuizEndpoint } from "../src/quizSafety";
 import { normalizeSettings } from "../src/validation";
 import { remapRecordPath, remapRecordPaths } from "../src/records";
+import { SRScheduler } from "../src/scheduler";
 import { SRRecord } from "../src/settings";
 
 test("localDateString uses local calendar components", () => {
@@ -100,4 +101,38 @@ test("remapRecordPaths rewrites folder records without overwriting existing reco
 	assert.deepEqual(Object.keys(records).sort(), ["New/a.md", "New/b.md"]);
 	assert.equal(records["New/a.md"]?.due, "2026-05-26");
 	assert.equal(records["New/b.md"]?.due, "2026-05-28");
+});
+
+test("SRScheduler: Again resets interval to 1 and drops ease", () => {
+	const result = SRScheduler.schedule(0, 10, 2.5);
+	assert.equal(result.interval, 1);
+	assert.ok(result.ease < 2.5);
+	assert.ok(result.ease >= 1.3);
+});
+
+test("SRScheduler: first successful review schedules for tomorrow", () => {
+	for (const q of [3, 4, 5]) {
+		assert.equal(SRScheduler.schedule(q, 0, 2.5).interval, 1);
+	}
+});
+
+test("SRScheduler: Hard grows interval slower than Good", () => {
+	const hard = SRScheduler.schedule(3, 10, 2.5);
+	const good = SRScheduler.schedule(4, 10, 2.5);
+	assert.equal(hard.interval, 12); // 10 * 1.2
+	assert.ok(good.interval > hard.interval);
+});
+
+test("SRScheduler: ease never drops below 1.3", () => {
+	let ease = 2.5;
+	for (let i = 0; i < 20; i++) {
+		ease = SRScheduler.schedule(0, 1, ease).ease;
+	}
+	assert.equal(ease, 1.3);
+});
+
+test("SRScheduler: Easy compounds interval by ease factor", () => {
+	const result = SRScheduler.schedule(5, 10, 2.5);
+	// ease rises to 2.6 after an Easy rating
+	assert.equal(result.interval, 26);
 });

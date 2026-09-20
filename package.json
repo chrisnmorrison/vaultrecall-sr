@@ -1,6 +1,6 @@
 {
 	"name": "vaultrecall-sr",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Beta spaced repetition for Obsidian with SM-2 scheduling and AI quizzes.",
 	"main": "main.js",
 	"type": "module",
@@ -19,7 +19,7 @@
 		"test": "node --import tsx --test tests/*.test.ts"
 	},
 	"keywords": [],
-	"license": "MIT",
+	"license": "0BSD",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/chrisnmorrison/vaultrecall.git"

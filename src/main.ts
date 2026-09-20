@@ -81,21 +81,31 @@ export default class VaultRecallPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file: TAbstractFile) => {
-				if (!(file instanceof TFolder)) return;
+				if (file instanceof TFolder) {
+					menu.addItem((item) =>
+						item
+							.setTitle("Start review session")
+							.setIcon("book-open")
+							.onClick(() => this.startNavigateSession(file)),
+					);
 
-				menu.addItem((item) =>
-					item
-						.setTitle("Start review session")
-						.setIcon("book-open")
-						.onClick(() => this.startNavigateSession(file)),
-				);
-
-				menu.addItem((item) =>
-					item
-						.setTitle("Start AI quiz session")
-						.setIcon("brain")
-						.onClick(() => this.startQuizSession(file)),
-				);
+					menu.addItem((item) =>
+						item
+							.setTitle("Start AI quiz session")
+							.setIcon("brain")
+							.onClick(() => this.startQuizSession(file)),
+					);
+				} else if (
+					file instanceof TFile &&
+					file.extension === "md"
+				) {
+					menu.addItem((item) =>
+						item
+							.setTitle("Start AI quiz on this note")
+							.setIcon("brain")
+							.onClick(() => this.startQuizSession(file)),
+					);
+				}
 			}),
 		);
 
@@ -324,7 +334,7 @@ export default class VaultRecallPlugin extends Plugin {
 		);
 	}
 
-	async startQuizSession(folder: TFolder): Promise<void> {
+	async startQuizSession(target: TFolder | TFile): Promise<void> {
 		if (!this.settings.apiKey) {
 			new Notice(
 				"VaultRecall SR: add an API key in settings to use AI Quiz.",
@@ -374,9 +384,16 @@ export default class VaultRecallPlugin extends Plugin {
 		this.sessionToken++;
 		this.quizMode = true;
 
-		const queues = this.applySessionSettings(
-			collectStudyQueues(this.app, folder, this.settings.records),
-		);
+		const queues =
+			target instanceof TFile
+				? { due: [] as TFile[], new: [target] }
+				: this.applySessionSettings(
+						collectStudyQueues(
+							this.app,
+							target,
+							this.settings.records,
+						),
+					);
 		const total = queues.due.length + queues.new.length;
 		if (total === 0) {
 			new Notice("VaultRecall SR: no due or new cards in this folder.");
@@ -736,9 +753,13 @@ export default class VaultRecallPlugin extends Plugin {
 	}
 
 	private getFrontmatter(file: TFile): Record<string, unknown> | undefined {
-		return this.app.metadataCache.getFileCache(file)?.frontmatter as
-			| Record<string, unknown>
-			| undefined;
+		const frontmatter = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		if (!frontmatter) return undefined;
+		const result: Record<string, unknown> = {};
+		for (const key of Object.keys(frontmatter)) {
+			result[key] = frontmatter[key] as unknown;
+		}
+		return result;
 	}
 
 	private toNumber(value: unknown, fallback: number): number {

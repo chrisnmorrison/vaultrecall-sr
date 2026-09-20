@@ -4,6 +4,14 @@ import { RATING_BUTTONS } from "./constants";
 type RateCallback = (quality: number) => void;
 type VoidCallback = () => void;
 
+function isModalOpen(): boolean {
+	return Boolean(
+		document.querySelector(
+			".modal-container.mod-active, .modal-container .modal",
+		),
+	);
+}
+
 export class ReviewHud {
 	private el: HTMLElement;
 	private keyHandler: (e: KeyboardEvent) => void;
@@ -26,6 +34,15 @@ export class ReviewHud {
 			)
 				return;
 			if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+			// Don't steal keys while a modal (quiz, confirm dialog, etc.) is open.
+			if (isModalOpen()) return;
+
+			if (e.key === "Escape") {
+				e.preventDefault();
+				this.onFinish();
+				return;
+			}
 
 			if (e.key === "u" && this.onUndo) {
 				e.preventDefault();
@@ -101,7 +118,7 @@ export class ReviewHud {
 
 		const finish = actions.createEl("button", {
 			cls: "sr-btn-finish",
-			text: "Finish session",
+			text: "Finish [esc]",
 		});
 		finish.addEventListener("click", () => this.onFinish());
 	}

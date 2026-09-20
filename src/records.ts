@@ -22,7 +22,9 @@ export function remapRecordPaths(
 ): number {
 	const changes: Array<[string, string, SRRecord]> = [];
 
-	for (const [path, record] of Object.entries(records)) {
+	for (const path of Object.keys(records)) {
+		const record = records[path];
+		if (!record) continue;
 		const remapped = remapRecordPath(path, oldPath, newPath, isFolder);
 		if (remapped && remapped !== path) {
 			changes.push([path, remapped, record]);

@@ -12,7 +12,7 @@ The plugin is now live in Community Plugins. You should find it by searching `va
 
 ### Starting a session
 
-Right-click any folder in the file explorer and choose **Start review session** or **Start AI quiz session**. You can also click the graduation-cap ribbon icon to start a session in your configured default folder, or use the command palette.
+Right-click any folder in the file explorer and choose **Start review session** or **Start AI quiz session**. Right-click a single Markdown note and choose **Start AI quiz on this note** to quiz yourself on just that file. You can also click the graduation-cap ribbon icon to start a session in your configured default folder, or use the command palette.
 
 ### Navigate mode
 
@@ -23,10 +23,13 @@ Rate each note after reading it:
 | Key | Rating                                    |
 | --- | ----------------------------------------- |
 | 1   | Again - forgotten, reschedule to tomorrow |
-| 2   | Hard                                      |
+| 2   | Hard - interval grows slowly (x1.2)       |
 | 3   | Good                                      |
 | 4   | Easy                                      |
 | u   | Undo last rating                          |
+| Esc | End session (asks for confirmation)       |
+
+Rating keys are disabled while a modal (quiz or confirmation) is open. In AI quiz mode, the same `1`-`4` keys rate the note directly from the quiz modal once questions have loaded.
 
 Notes without an internal review record are treated as new. Each session includes due cards up to your daily due review limit plus up to your configured new-card limit.
 

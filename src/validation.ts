@@ -68,9 +68,9 @@ export function normalizeSettings(value: unknown): VaultRecallSettings {
 			? (raw.records as Record<string, unknown>)
 			: {};
 
-	for (const [path, record] of Object.entries(rawRecords)) {
+	for (const path of Object.keys(rawRecords)) {
 		if (!path || path.includes("\0")) continue;
-		const normalized = normalizeRecord(record);
+		const normalized = normalizeRecord(rawRecords[path]);
 		if (normalized) records[path] = normalized;
 	}
 

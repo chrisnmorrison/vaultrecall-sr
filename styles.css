@@ -82,22 +82,22 @@
 	color: white;
 }
 
-.sr-btn-edit {
+.sr-hud .sr-btn-edit {
 	background: transparent;
 	color: var(--text-muted);
-	border: 1px solid var(--background-modifier-border) !important;
+	border: 1px solid var(--background-modifier-border);
 }
 
-.sr-btn-finish {
+.sr-hud .sr-btn-finish {
 	background: transparent;
 	color: var(--text-muted);
-	border: 1px solid var(--background-modifier-border) !important;
+	border: 1px solid var(--background-modifier-border);
 }
 
-.sr-btn-undo {
+.sr-hud .sr-btn-undo {
 	background: transparent;
 	color: var(--text-muted);
-	border: 1px solid var(--background-modifier-border) !important;
+	border: 1px solid var(--background-modifier-border);
 }
 
 .sr-btn-undo:disabled {
