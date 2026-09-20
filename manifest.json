@@ -1,9 +1,9 @@
 {
 	"id": "vaultrecall",
-	"name": "VaultRecall SR",
+	"name": "VaultRecall Spaced Repetition",
 	"version": "0.1.2",
 	"minAppVersion": "1.4.0",
-	"description": "Beta spaced repetition for your vault with SM-2 scheduling and optional BYOK AI-generated quizzes.",
+	"description": "(In beta) Spaced repetition for your vault with SM-2 scheduling and optional BYOK AI-generated quizzes.",
 	"authorUrl": "https://github.com/chrisnmorrison",
 	"author": "Chris Morrison",
 	"isDesktopOnly": true

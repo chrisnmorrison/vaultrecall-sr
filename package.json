@@ -1,7 +1,7 @@
 {
 	"name": "vaultrecall-sr",
 	"version": "0.1.2",
-	"description": "Beta spaced repetition for Obsidian with SM-2 scheduling and AI quizzes.",
+	"description": "(In beta) Spaced repetition for your vault with SM-2 scheduling and optional BYOK AI-generated quizzes.",
 	"main": "main.js",
 	"type": "module",
 	"files": [
