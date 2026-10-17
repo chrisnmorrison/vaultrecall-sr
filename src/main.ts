@@ -18,7 +18,7 @@ import { localDateString } from "./date";
 import { normalizeSettings } from "./validation";
 import { confirmModal } from "./confirmModal";
 import { validateQuizEndpoint } from "./quizSafety";
-import { remapRecordPaths } from "./records";
+import { remapRecordPath, remapRecordPaths } from "./records";
 
 const STATUS_SCAN_LIMIT = 5000;
 
@@ -55,7 +55,16 @@ export default class VaultRecallPlugin extends Plugin {
 					file.path,
 					file instanceof TFolder,
 				);
-				if (remapped > 0) {
+				const nextDefaultFolder = remapRecordPath(
+					this.settings.defaultFolder,
+					oldPath,
+					file.path,
+					file instanceof TFolder,
+				);
+				if (nextDefaultFolder !== null) {
+					this.settings.defaultFolder = nextDefaultFolder;
+				}
+				if (remapped > 0 || nextDefaultFolder !== null) {
 					void this.saveSettings();
 				}
 				this.updateStatusBar();
@@ -426,18 +435,16 @@ export default class VaultRecallPlugin extends Plugin {
 		const file = this.session?.currentFile;
 		if (file) {
 			this.closeActiveQuizModal();
-			const token = String(this.sessionToken);
+			const token = this.sessionToken;
 			const modal = new QuizModal(
 				this.app,
 				file,
 				this.settings,
 				(q, path) => {
-					if (!this.session || String(this.sessionToken) !== token)
-						return;
+					if (!this.session || this.sessionToken !== token) return;
 					if (this.session.currentFile?.path !== path) return;
 					void this.rate(q);
 				},
-				token,
 			);
 			this.activeQuizModal = modal;
 			modal.open();
@@ -445,11 +452,12 @@ export default class VaultRecallPlugin extends Plugin {
 	}
 
 	private async rate(quality: number): Promise<void> {
-		if (!this.session || this.isRating) return;
+		const session = this.session;
+		if (!session || this.isRating) return;
 		this.isRating = true;
 
 		try {
-			const result = await this.session.rateAndAdvance(quality);
+			const result = await session.rateAndAdvance(quality);
 			if (!result) return;
 
 			this.incrementStats();
@@ -462,16 +470,19 @@ export default class VaultRecallPlugin extends Plugin {
 				);
 			}
 
-			if (this.session.isDone) {
+			// The session may have been ended while the rating was being saved.
+			if (this.session !== session) return;
+
+			if (session.isDone) {
 				new Notice("VaultRecall SR: session complete!");
 				this.finishSession();
 				return;
 			}
 
 			this.hud?.update();
-			await this.session.openCurrent();
+			await session.openCurrent();
 
-			if (this.quizMode) {
+			if (this.quizMode && this.session === session) {
 				this.openQuizForCurrent();
 			}
 		} catch {
@@ -484,20 +495,28 @@ export default class VaultRecallPlugin extends Plugin {
 	}
 
 	private async undo(): Promise<void> {
-		if (!this.session) return;
-		const success = await this.session.undo();
-		if (success) {
+		const session = this.session;
+		if (!session || this.isRating) return;
+		this.isRating = true;
+
+		try {
+			if (!(await session.undo())) return;
+
 			if (this.settings.stats.reviewedToday > 0) {
 				this.settings.stats.reviewedToday--;
 				void this.saveSettings();
 			}
 			this.updateStatusBar();
+			if (this.session !== session) return;
+
 			this.hud?.update();
 			this.closeActiveQuizModal();
-			await this.session.openCurrent();
-			if (this.quizMode) {
+			await session.openCurrent();
+			if (this.quizMode && this.session === session) {
 				this.openQuizForCurrent();
 			}
+		} finally {
+			this.isRating = false;
 		}
 	}
 

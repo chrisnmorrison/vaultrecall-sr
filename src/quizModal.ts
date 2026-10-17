@@ -1,4 +1,11 @@
-import { App, Modal, Notice, TFile, requestUrl } from "obsidian";
+import {
+	App,
+	Modal,
+	Notice,
+	RequestUrlResponse,
+	TFile,
+	requestUrl,
+} from "obsidian";
 import { VaultRecallSettings } from "./settings";
 import { RATING_BUTTONS } from "./constants";
 import { sanitizeQuizMarkdown } from "./quizSafety";
@@ -20,7 +27,6 @@ export class QuizModal extends Modal {
 		private file: TFile,
 		private settings: VaultRecallSettings,
 		private onRate?: (quality: number, filePath: string) => void,
-		private requestToken = "",
 	) {
 		super(app);
 
@@ -139,16 +145,18 @@ export class QuizModal extends Modal {
 	private async fetchQuiz(content: string): Promise<string> {
 		const prompt = this.settings.customPrompt.trim() || DEFAULT_PROMPT;
 
-		const timeoutPromise = new Promise<never>((_, reject) =>
-			window.setTimeout(
+		let timeoutId: number | undefined;
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			timeoutId = window.setTimeout(
 				() => reject(new Error("Request timed out after 30 seconds")),
 				TIMEOUT_MS,
-			),
-		);
+			);
+		});
 
 		const fetchPromise = requestUrl({
 			url: this.settings.apiBaseUrl,
 			method: "POST",
+			throw: false,
 			headers: {
 				"Content-Type": "application/json",
 				Authorization: `Bearer ${this.settings.apiKey}`,
@@ -163,26 +171,44 @@ export class QuizModal extends Modal {
 					},
 					{
 						role: "user",
-						content: `${prompt}\n\n---\n\n${content}`,
+						content: `${prompt}
+
+---
+
+${content}`,
 					},
 				],
 				max_tokens: 1000,
-				user: this.requestToken || undefined,
 			}),
 		});
+		// If the timeout wins the race, a late network failure must not surface
+		// as an unhandled rejection.
+		fetchPromise.catch(() => undefined);
 
-		const response = await Promise.race([fetchPromise, timeoutPromise]);
+		let response: RequestUrlResponse;
+		try {
+			response = await Promise.race([fetchPromise, timeoutPromise]);
+		} finally {
+			window.clearTimeout(timeoutId);
+		}
 
 		if (response.status < 200 || response.status >= 300) {
 			throw new Error(`API returned status ${response.status}`);
 		}
 
 		type ChatResponse = {
-			choices: { message: { content: string } }[];
+			choices?: { message?: { content?: unknown } }[];
 		};
-		const data = response.json as ChatResponse;
-		const text = data.choices[0]?.message?.content;
-		if (!text) throw new Error("Empty response from API");
+		let data: ChatResponse;
+		try {
+			data = response.json as ChatResponse;
+		} catch {
+			throw new Error("API returned a response that is not valid JSON");
+		}
+		const text = data.choices?.[0]?.message?.content;
+		if (typeof text !== "string" || !text.trim()) {
+			throw new Error("Empty response from API");
+		}
 		return text;
 	}
 }
