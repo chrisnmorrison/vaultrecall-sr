@@ -87,6 +87,21 @@ The plugin uses Obsidian's built-in `requestUrl` for API calls, which means requ
 
 Run **VaultRecall Spaced Repetition: Copy diagnostics** when reporting an issue. It copies plugin/app versions, non-secret settings, review-record counts, and default-folder scan counts. It never includes your API key or note content.
 
+## Permissions and privacy
+
+VaultRecall runs locally and makes no network requests except AI quiz calls to the endpoint you configure. The Obsidian review scanner flags two capabilities; here is exactly how they are used:
+
+- **Vault enumeration.** The review queue, status bar, and statistics list Markdown files only inside your chosen review folder. The whole vault is enumerated only when you run **Import legacy frontmatter review data** or **Remove legacy frontmatter review data**, which need to find every note with `sr-*` frontmatter. File paths never leave your device.
+- **Clipboard.** The plugin only *writes* to the clipboard, and only when you run **Copy diagnostics**. It never reads the clipboard. The diagnostics contain no API key or note content.
+
+## Verifying releases
+
+Release assets are built by GitHub Actions and carry [artifact attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations). To verify a downloaded file was built from this repository:
+
+```
+gh attestation verify main.js --repo chrisnmorrison/vaultrecall-sr
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome. Please report beta issues at [github.com/chrisnmorrison/vaultrecall-sr/issues](https://github.com/chrisnmorrison/vaultrecall-sr/issues). The source is plain TypeScript with no runtime dependencies beyond the Obsidian API.

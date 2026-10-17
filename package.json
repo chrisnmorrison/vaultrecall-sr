@@ -1,6 +1,6 @@
 {
 	"name": "vaultrecall-sr",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "(In beta) Spaced repetition for your vault with SM-2 scheduling and optional BYOK AI-generated quizzes.",
 	"main": "main.js",
 	"type": "module",

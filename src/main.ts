@@ -759,9 +759,14 @@ export default class VaultRecallPlugin extends Plugin {
 			},
 		};
 
-		await navigator.clipboard.writeText(
-			JSON.stringify(diagnostics, null, 2),
-		);
+		try {
+			await navigator.clipboard.writeText(
+				JSON.stringify(diagnostics, null, 2),
+			);
+		} catch {
+			new Notice("VaultRecall SR: could not write to the clipboard.");
+			return;
+		}
 		new Notice("VaultRecall SR: diagnostics copied to clipboard.");
 	}
 

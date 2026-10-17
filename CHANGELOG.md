@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented here.
 
+## [0.1.4] — 2026-10-17
+
+### Added
+
+- Release assets (`main.js`, `manifest.json`, `styles.css`) now include GitHub artifact attestations, so their build provenance can be verified with `gh attestation verify`.
+- README section documenting the plugin's vault-enumeration and clipboard use.
+
+### Fixed
+
+- "Copy diagnostics" shows a notice instead of failing silently when the clipboard cannot be written.
+
 ## [0.1.3] — 2026-10-17
 
 ### Changed

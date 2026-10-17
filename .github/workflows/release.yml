@@ -10,6 +10,9 @@ on:
 
 permissions:
     contents: write
+    # Required to sign and store build provenance attestations.
+    id-token: write
+    attestations: write
 
 concurrency:
     group: release
@@ -103,6 +106,15 @@ jobs:
                     exit 1
                   fi
                   cat release-notes.md
+
+            - name: Attest build provenance
+              if: steps.existing.outputs.exists == 'false'
+              uses: actions/attest-build-provenance@v2
+              with:
+                  subject-path: |
+                      main.js
+                      manifest.json
+                      styles.css
 
             - name: Create GitHub Release
               if: steps.existing.outputs.exists == 'false'
